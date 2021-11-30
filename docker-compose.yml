@@ -1,0 +1,8 @@
+version: '3'
+services:
+  deap_optimize:
+    container_name: deap_optimize
+    build: .
+    tty: true
+    volumes:
+      - ./app:/usr/local/deap_optimize
