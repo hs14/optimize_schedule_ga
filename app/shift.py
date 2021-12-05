@@ -24,6 +24,7 @@ class Shift(object):
             'get_sum_dependency_violation_day': self.get_sum_dependency_violation_day,
             'get_sum_assign_prohibit_day': self.get_sum_assign_prohibit_day,
             'get_sum_not_assign_required_day': self.get_sum_not_assign_required_day,
+            'get_sum_under_lower_limit_day': self.get_sum_under_lower_limit_day,
         }
 
     def _search_dependent_member(self, dep_list):
@@ -121,14 +122,25 @@ class Shift(object):
     
     def get_sum_over_capacity_day(self):
         '''
-        キャパシティを超えている日数
+        最大人数を超えている日数
         '''        
         over_capacity_day_num = 0
-        for index, capacity in enumerate(self.calendar.capacity):
+        for index, capacity in enumerate(self.calendar.upper_limit):
             if len(self._get_member_nos_by_date_index(index)) > capacity:
                 over_capacity_day_num += 1
         
         return over_capacity_day_num
+    
+    def get_sum_under_lower_limit_day(self):
+        '''
+        最少人数を下回っている人数
+        '''
+        under_lower_limit_day_num = 0
+        for index, lower_limit in enumerate(self.calendar.lower_limit):
+            if len(self._get_member_nos_by_date_index(index)) < lower_limit:
+                under_lower_limit_day_num += 1
+        
+        return under_lower_limit_day_num
     
     def get_diff_actual_and_plan_hour(self):
         '''

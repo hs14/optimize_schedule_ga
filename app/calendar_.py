@@ -5,12 +5,18 @@ import jpholiday
 
 class Calendar(object):
 
-    def __init__(self, year:int, month:int):
-        self.year     = year
-        self.month    = month
-        self.dates    = []     # シフトを組む日付
-        self.days     = []     # 日付に対応する曜日
-        self.capacity = []     # 日付に対応するキャパシティ
+    def __init__(self, year:int, month:int, maximum:int, minimum:int,
+                    special_holidays:list, special_weekdays:list):
+        self.year             = year
+        self.month            = month
+        self.maximum          = maximum
+        self.minimum          = minimum
+        self.special_holidays = special_holidays
+        self.special_weekdays = special_weekdays
+        self.dates            = []     # シフトを組む日付
+        self.days             = []     # 日付に対応する曜日
+        self.upper_limit      = []     # 最大人数
+        self.lower_limit      = []     # 最小人数
         self._make_weekday_list()
 
     def _make_weekday_list(self):
@@ -21,9 +27,6 @@ class Calendar(object):
         # 指定月の最終日を取得
         month_range = calendar.monthrange(self.year, self.month)
         end_day     = month_range[1]
-
-        # キャパシティは4で固定
-        CAPASITY = 4
 
         # 日ごとに曜日を取得してリストに詰める
         for index in range(end_day):
@@ -39,12 +42,19 @@ class Calendar(object):
             day_name = calendar.day_name[day_num]
             self.dates.append(date_num)
             self.days.append(day_name)
-            self.capacity.append(CAPASITY)
+            self.upper_limit.append(self.maximum)
+            self.lower_limit.append(self.minimum)
     
     def _is_holiday(self, check_date:date, day_of_week:int):
         '''
         指定の日付が休みかどうか
         '''
+
+        # 特別指定した日はその通りに判定
+        if check_date.day in self.special_weekdays:
+            return False
+        if check_date.day in self.special_holidays:
+            return True
 
         # 土日の場合はTrue
         (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY) = range(7)

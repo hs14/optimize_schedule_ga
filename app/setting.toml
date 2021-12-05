@@ -2,19 +2,28 @@
 #  対象の年月
 # ------------------------------------------
 [calendar]
-    year = 2021
-    month = 11
+    year             = 2021
+    month            = 12
+    special_holidays = [29, 30, 31]  # 平日だが祝日扱いしたい日
+    special_weekdays = []            # 祝日だが平日扱いしたい日
 
 # ------------------------------------------
 #  遺伝的アルゴリズムのパラメータ
 # ------------------------------------------
 [optimize]
-    pop       = 300   # 個体数
+    pop       = 500   # 個体数
     cxpb      = 0.6   # 交叉を実施する確率
     mutpb     = 0.5   # 突然変異を起こす確率
     indpb     = 0.05  # 突然変異時の各属性の反転確率
     ngen      = 500   # 進化計算回数
     tournsize = 3     # トーナメントに参加させる個体数
+
+# ------------------------------------------
+#  定員
+# ------------------------------------------
+[capacity]
+    maximum = 4
+    minimum = 2
 
 # ------------------------------------------
 #  評価関数と重み (小さい方が望ましい場合は負)
@@ -24,37 +33,43 @@
 [[evaluate]]
     method = "get_sum_over_capacity_day"
     weight = -1.0
-    description = "定員を超えた日数の評価"
+    description = "定員を超えた日数"
+
+# 1ヵ月全体で最少人数を下回る日数を少なくする
+[[evaluate]]
+    method = "get_sum_under_lower_limit_day"
+    weight = -1.0
+    description = "最少人数を下回った日数"
 
 # 1ヵ月全体で予定工数と実工数の差を少なくする
 [[evaluate]]
     method = "get_diff_actual_and_plan_hour"
     weight = -3.0
-    description = "予実工数の差の評価"
+    description = "予実工数の差"
 
 # 1ヵ月全体で管理者がいない日を少なくする
 [[evaluate]]
     method = "get_sum_manager_not_exist_day"
     weight = -0.5
-    description = "管理者がいない日数の評価"
+    description = "管理者がいない日数"
 
 # 1ヵ月全体でセットでの出勤が必要な人がセットでない日を少なくする
 [[evaluate]]
     method = "get_sum_dependency_violation_day"
     weight = -3.0
-    description = "セット出勤できない日数の評価"
+    description = "セット出勤できない日数"
 
 # 1ヵ月全体で欠勤希望日への出勤割り当て数を少なくする
 [[evaluate]]
     method = "get_sum_assign_prohibit_day"
-    weight = -100.0
-    description = "出勤できない日の評価"
+    weight = -30.0
+    description = "出勤できない日が出勤になっている日数"
 
 # 1ヵ月全体で出勤が必要な日の欠勤日を少なくする
 [[evaluate]]
     method = "get_sum_not_assign_required_day"
-    weight = -100.0
-    description = "出勤が必要な日の評価"
+    weight = -5.0
+    description = "出勤が必要な日が欠勤になっている日数"
 
 # ------------------------------------------
 #  シフトを組むメンバー
@@ -64,35 +79,35 @@
     name = "佐藤"
     is_manager = true
     man_hour_rate = 0.6
-    impossible_dates = [4,11,18]
-    required_dates = [29,30]
+    impossible_dates = [2,9,16,23]
+    required_dates = []
     related_members = []
 
 [[member]]
     no = 2
-    name = "鈴木"
-    is_manager = false
-    man_hour_rate = 0.6
-    impossible_dates = []
+    name = "山田"
+    is_manager = true
+    man_hour_rate = 0.5
+    impossible_dates = [2,9,16,23,27,28]
     required_dates = []
     related_members = []
 
 [[member]]
     no = 3
-    name = "高橋"
+    name = "鈴木"
     is_manager = false
     man_hour_rate = 0.6
-    impossible_dates = [1,17,26]
-    required_dates = []
+    impossible_dates = [27,28]
+    required_dates = [8, 22]
     related_members = []
 
 [[member]]
     no = 4
-    name = "山田"
-    is_manager = true
-    man_hour_rate = 0.5
-    impossible_dates = [18,25]
-    required_dates = [5,12,19,26]
+    name = "高橋"
+    is_manager = false
+    man_hour_rate = 0.6
+    impossible_dates = [27,28]
+    required_dates = []
     related_members = []
 
 [[member]]
@@ -102,5 +117,4 @@
     man_hour_rate = 0.6
     impossible_dates = []
     required_dates = []
-    related_members = [2,3]
-
+    related_members = [3,4]

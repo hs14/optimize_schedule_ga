@@ -1,10 +1,12 @@
 import random
+import argparse
 
 from deap import base, creator, tools, cma
 import toml
 
 from member import Member
 from calendar_ import Calendar
+from capacity import Capacity
 from shift import Shift
 from optimize import Optimize, Evaluate
 from optimize import get_method_alias_list, get_weight_tuple
@@ -15,11 +17,22 @@ def read_toml(file):
     '''
     params = toml.load(file)
 
+    # Capacityインスタンスのリストを作成
+    param_capacity = params['capacity']
+    capacity_obj = Capacity(
+        param_capacity['maximum'],
+        param_capacity['minimum']
+    )
+
     # Calendarインスタンスを作成
     param_calendar = params['calendar']
     calendar_obj = Calendar(
         param_calendar['year'],
-        param_calendar['month']
+        param_calendar['month'],
+        capacity_obj.maximum,
+        capacity_obj.minimum,
+        param_calendar['special_holidays'],
+        param_calendar['special_weekdays']
     )
 
     # Memberインスタンスのリストを作成
@@ -62,13 +75,13 @@ def read_toml(file):
     return (calendar_obj, member_objs, optimize_obj, evaluate_objs)
 
 
-def main():
+def main(args):
 
     # ----------------------------------------------------------
     # tomlファイルの設定を読み込んでインスタンスを作成する。
     # ----------------------------------------------------------
 
-    calendar_obj, members, optimize_obj, evaluate_objs = read_toml('./setting.toml')
+    calendar_obj, members, optimize_obj, evaluate_objs = read_toml(args.setting)
     
     # ----------------------------------------------------------
     # creatorにより、第三引数以降の属性を持つクラスを作成する。
@@ -119,6 +132,7 @@ def main():
 
     # 選択関数 (トーナメント方式で選択する)
     toolbox.register('select', tools.selTournament, tournsize=optimize_obj.tournsize)
+    #toolbox.register('select', tools.selNSGA2)
 
     # ----------------------------------------------------------
     # 進化計算開始
@@ -138,7 +152,7 @@ def main():
         #  選択
         # ----------------------
 
-        # 次の世代の個体群を選択
+        # 個体群を選択
         offspring = toolbox.select(pop, len(pop))
 
         # 個体群のクローンを生成
@@ -184,6 +198,20 @@ def main():
 
         pop[:] = offspring
 
+        # ----------------------
+        #  現状最適個体の評価値を出力し、最高評価であればストップする。
+        # ----------------------
+        best_ind = tools.selBest(pop, 1)[0]
+        eval_values = tuple(map(lambda x: round(x, 2), best_ind.fitness.values))
+
+        sum_values = 0
+        for eval_value, evaluate_obj in zip(eval_values, evaluate_objs):
+            sum_values += eval_value * abs(evaluate_obj.weight)
+
+        print(f'評価値:{sum_values}, 個別値:{eval_values}')
+        if (sum_values == 0):
+            break
+
     # ----------------------------------------------------------
     #  結果出力
     # ----------------------------------------------------------
@@ -207,4 +235,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--setting', default='./setting.toml')
+    args = parser.parse_args()
+    main(args)
